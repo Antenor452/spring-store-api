@@ -1,0 +1,81 @@
+package com.codewithmosh.store.carts;
+
+import com.codewithmosh.store.exceptions.CartNotFoundException;
+import com.codewithmosh.store.exceptions.ProductNotFoundException;
+import com.codewithmosh.store.mappers.CartMapper;
+import com.codewithmosh.store.repositories.CartRepository;
+import com.codewithmosh.store.products.ProductRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+
+@Service
+@AllArgsConstructor
+public class CartService {
+
+    private final CartRepository cartRepository;
+    private final CartMapper cartMapper;
+    private final ProductRepository productRepository;
+
+    public CartDto createCart() {
+        var cart = new Cart();
+        cartRepository.save(cart);
+
+        return cartMapper.toDto(cart);
+    }
+
+    public Cart getCart(UUID cartId) {
+        return cartRepository.getCartWithItems(cartId).orElseThrow(CartNotFoundException::new);
+    }
+
+    public CartDto getCartDto(UUID cartId) {
+        return cartMapper.toDto(getCart(cartId));
+    }
+
+
+    public CartItemDto addItemToCart(UUID cartId, Long productId) {
+        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
+        if (cart == null) throw new CartNotFoundException();
+
+        var product = productRepository.findById(productId).orElse(null);
+        if (product == null) throw new ProductNotFoundException();
+
+        var cartItem = cart.addItem(product);
+        cartRepository.save(cart);
+
+        return cartMapper.toCartItemDto(cartItem);
+    }
+
+    public CartItemDto updateItem(UUID cartId, Long productId, int quantity) {
+        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
+        if (cart == null) throw new CartNotFoundException();
+
+        var cartItem = cart.getItem(productId);
+        if (cartItem == null) throw new ProductNotFoundException();
+
+        cartItem.setQuantity(quantity);
+        cartRepository.save(cart);
+
+        return cartMapper.toCartItemDto(cartItem);
+    }
+
+    public void removeItem(UUID cartId, Long productId) {
+        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
+        if (cart == null) throw new CartNotFoundException();
+
+        cart.removeItem(productId);
+        cartRepository.save(cart);
+    }
+
+
+    public void clearCart(UUID cartId) {
+        var cart = cartRepository.getCartWithItems(cartId).orElse(null);
+        if (cart == null) throw new CartNotFoundException();
+
+        cart.clear();
+        cartRepository.save(cart);
+    }
+
+
+}

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: store
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+
+clientUrl: https://localhost:4545
