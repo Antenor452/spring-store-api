@@ -1,6 +1,6 @@
 package com.codewithmosh.store.authentication.config;
 
-import com.codewithmosh.store.users.Role;
+import com.codewithmosh.store.common.SecurityRules;
 import com.codewithmosh.store.authentication.filters.JwtAuthenticationFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,12 +22,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @AllArgsConstructor
 public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final List<SecurityRules> featuresSecurityRules;
 
 
     @Bean
@@ -55,14 +58,12 @@ public class SecurityConfig {
                         c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c ->
-                        c
-                                .requestMatchers("/carts/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
-                                .requestMatchers("/admin/**").hasRole(Role.ADMIN.name())
-                                .requestMatchers(HttpMethod.POST, "/checkout/webhook").permitAll()
-                                .anyRequest().authenticated()
+                        {
+                            featuresSecurityRules.forEach(r -> r.configure(c));
+                            c
+                                    .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                                    .anyRequest().authenticated();
+                        }
 
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
