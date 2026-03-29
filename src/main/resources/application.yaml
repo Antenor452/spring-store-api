@@ -10,7 +10,7 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 7200
+    accessTokenExpiration: 300
     refreshTokenExpiration: 604800 #7d
 
   profiles:
